@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Ini-import ang ginawa mong login page
+import 'login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,13 +12,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Canteen App',
-      debugShowCheckedModeBanner: false, // Tinatanggal ang "debug" banner sa taas
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Ginawa nating Blue para mag-match sa Signup design mo
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      // Dito natin binago para LoginPage na ang default screen
-      home: LoginPage(), 
+      // Siguraduhin na ang class sa login_page.dart ay "LoginPage"
+      home: LoginPage(),
     );
   }
 }
