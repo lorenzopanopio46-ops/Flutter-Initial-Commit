@@ -3,18 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 
-// --- IMPORT IYONG LOGIN PAGE FILE ---
 import 'login_page.dart';
-
-void main() {
-  runApp(
-    MaterialApp(
-      // Inalis ang 'const' dito dahil ang LoginPage constructor ay maaaring hindi const
-      home: LoginPage(),
-      debugShowCheckedModeBanner: false,
-    ),
-  );
-}
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -37,35 +26,49 @@ class _MenuPageState extends State<MenuPage> {
     setState(() {
       cartItems.add({"food_name": name, "price": price});
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("$name added to cart!")));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.blueAccent,
+        content: Text("$name added to cart!"),
+      ),
+    );
+  }
+
+  double getTotalPrice() {
+    double total = 0;
+    for (var item in cartItems) {
+      total += double.tryParse(item["price"] ?? "0") ?? 0;
+    }
+    return total;
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [
+    final pages = [
       HomeScreen(onOrderPressed: addToCart),
-      OrderScreen(orders: cartItems),
+      OrderScreen(orders: cartItems, totalPrice: getTotalPrice()),
       const ProfileScreen(),
     ];
 
     return Scaffold(
+      // Set a dark background for the whole app to match your theme
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: const Text("My First Mobile App"),
-        backgroundColor: Colors.blue[800],
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () => _onItemTapped(1),
-          ),
-        ],
+        title: const Text("Canteen App"),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF0F172A),
+        elevation: 0,
       ),
-      body: pages[_selectedIndex],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        child: pages[_selectedIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF0F172A),
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue[800],
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -80,7 +83,7 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-// --- 1. HOME SCREEN ---
+// ================= HOME SCREEN =================
 class HomeScreen extends StatefulWidget {
   final Function(String, String) onOrderPressed;
   const HomeScreen({super.key, required this.onOrderPressed});
@@ -95,12 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _isVisible = false;
-        });
-      }
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _isVisible = false);
     });
   }
 
@@ -109,46 +108,63 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await http.get(
         Uri.parse("http://localhost/flutter_api/get_menu.php"),
       );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        return [];
-      }
+      if (response.statusCode == 200) return json.decode(response.body);
     } catch (e) {
-      return [];
+      debugPrint("API Error: $e");
     }
+    return [];
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        if (_isVisible)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            color: Colors.greenAccent,
+            child: const Center(
+              child: Text(
+                "Login Successful!",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: getMenu(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (!snapshot.hasData)
                 return const Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text("No menu items found."));
-              }
-
+              final menu = snapshot.data!;
               return ListView.builder(
-                itemCount: snapshot.data!.length,
+                itemCount: menu.length,
                 itemBuilder: (context, index) {
-                  var item = snapshot.data![index];
-                  return Card(
+                  final item = menu[index];
+                  return Container(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 6,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                      ),
                     ),
                     child: ListTile(
                       title: Text(
                         item['food_name'],
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      subtitle: Text("P${item['price']}.00"),
+                      subtitle: Text(
+                        "₱${item['price']}",
+                        style: const TextStyle(color: Colors.blueAccent),
+                      ),
                       trailing: ElevatedButton(
                         onPressed: () => widget.onOrderPressed(
                           item['food_name'],
@@ -163,86 +179,94 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        if (_isVisible)
-          Container(
-            width: double.infinity,
-            color: Colors.green,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            child: const Text(
-              "Login Successful!",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
       ],
     );
   }
 }
 
-// --- 2. ORDER SCREEN ---
+// ================= ORDER SCREEN =================
 class OrderScreen extends StatelessWidget {
   final List<Map<String, String>> orders;
-  const OrderScreen({super.key, required this.orders});
+  final double totalPrice;
+  const OrderScreen({
+    super.key,
+    required this.orders,
+    required this.totalPrice,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const ListTile(
-            leading: Icon(Icons.shopping_basket_outlined, color: Colors.blue),
-            title: Text(
-              "Cart Items",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: orders.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.shopping_cart_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Your cart is empty",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        child: ListTile(
-                          title: Text(orders[index]['food_name']!),
-                          subtitle: Text("Price: P${orders[index]['price']}"),
-                          trailing: const Icon(
-                            Icons.receipt_long,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      );
-                    },
+    return Column(
+      children: [
+        Expanded(
+          child: orders.isEmpty
+              ? const Center(
+                  child: Text(
+                    "Your cart is empty",
+                    style: TextStyle(color: Colors.grey),
                   ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: orders.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.fastfood,
+                          color: Colors.blueAccent,
+                        ),
+                        title: Text(
+                          orders[index]['food_name']!,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        trailing: Text(
+                          "₱${orders[index]['price']}",
+                          style: const TextStyle(
+                            color: Colors.blueAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "TOTAL:",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              Text(
+                "₱${totalPrice.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  color: Colors.greenAccent,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-// --- 3. PROFILE SCREEN ---
+// ================= UPDATED VISIBLE PROFILE =================
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -251,91 +275,129 @@ class ProfileScreen extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
+          // Header Section
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            decoration: BoxDecoration(
-              color: Colors.blue[600],
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(40),
+            padding: const EdgeInsets.only(top: 40, bottom: 30),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF1E3A8A), Color(0xFF0F172A)],
               ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
             ),
-            child: const Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 60, color: Colors.blue),
-                ),
-                SizedBox(height: 15),
-                Text(
-                  "RENZO PANOPIO",
-                  style: TextStyle(
-                    fontSize: 22,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "zorenpo@gmail.com",
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-          const ProfileInfoTile(
-            icon: Icons.phone,
-            label: "Contact Number",
-            value: "1234567890",
-          ),
-          const ProfileInfoTile(
-            icon: Icons.location_on,
-            label: "Address",
-            value: "General Trias, Cavite",
-          ),
-          const ProfileInfoTile(
-            icon: Icons.badge,
-            label: "Username",
-            value: "zoren_01",
-          ),
-          const Divider(height: 40),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.edit),
-                  label: const Text("Edit Profile"),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.blue[700],
-                    foregroundColor: Colors.white,
+                const CircleAvatar(
+                  radius: 55,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 52,
+                    backgroundColor: Color(0xFF0F172A),
+                    child: Icon(Icons.person, size: 65, color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 15),
+                const Text(
+                  "KURT ATIENZA",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  "BSIT Student • Canteen App User",
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
 
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      // Inalis ang 'const' dito para maayos ang diagnostic error
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                      (route) => false,
-                    );
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Logout"),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
+          const SizedBox(height: 20),
+
+          // Info Tiles
+          const ProfileInfoTile(
+            icon: Icons.person_outline,
+            label: "Full Name",
+            value: "Kurt Rainier Atienza",
+          ),
+          const ProfileInfoTile(
+            icon: Icons.school_outlined,
+            label: "Course",
+            value: "BS Computer Science",
+          ),
+          const ProfileInfoTile(
+            icon: Icons.email_outlined,
+            label: "Email",
+            value: "kurt.atienza@student.ph",
+          ),
+          const ProfileInfoTile(
+            icon: Icons.phone_android_outlined,
+            label: "Contact",
+            value: "0917-555-8899",
+          ),
+          const ProfileInfoTile(
+            icon: Icons.location_on_outlined,
+            label: "Address",
+            value: "Parian Calamba",
+          ),
+
+          const SizedBox(height: 30),
+
+          // Buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {},
+                    child: const Text(
+                      "Edit Profile",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent.withOpacity(0.8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => LoginPage()),
+                        (route) => false,
+                      );
+                    },
+                    child: const Text(
+                      "Logout",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -355,15 +417,29 @@ class ProfileInfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 14, color: Colors.grey),
-      ),
-      subtitle: Text(
-        value,
-        style: const TextStyle(fontSize: 16, color: Colors.black),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blueAccent.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: Colors.blueAccent),
+        ),
+        title: Text(
+          label,
+          style: const TextStyle(color: Colors.grey, fontSize: 13),
+        ),
+        subtitle: Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

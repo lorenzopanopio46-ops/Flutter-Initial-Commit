@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'menu_page.dart';
-import 'signup_page.dart'; // Siguraduhing tama ang import
+import 'signup_page.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -10,8 +10,8 @@ class LoginPage extends StatelessWidget {
 
   LoginPage({super.key});
 
+  // --- LOGIC REMAINS UNCHANGED ---
   Future<void> loginUser(BuildContext context) async {
-    // GAMITIN ANG LOCALHOST KUNG CHROME ANG GAMIT MO
     var url = Uri.parse("http://localhost/flutter_api/login.php");
 
     try {
@@ -25,12 +25,12 @@ class LoginPage extends StatelessWidget {
 
       var data = json.decode(response.body);
 
-      if (!context.mounted) return; // Guard para sa async gaps
+      if (!context.mounted) return;
 
       if (data == "Success") {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MenuPage()),
+          MaterialPageRoute(builder: (context) => const MenuPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,109 +48,222 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueAccent,
-      body: SingleChildScrollView(
+      // Set the background behind the card to match the dark theme
+      backgroundColor: const Color(0xFF121212),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            // Deep Black to Dark Slate Gradient
+            colors: [Color(0xFF000000), Color(0xFF2C3E50)],
+          ),
+        ),
         child: Column(
           children: [
             const SizedBox(height: 80),
-            const Center(
-              child: Icon(Icons.lock, size: 100, color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Welcome Back",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 40),
+            // Header Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
-                children: [
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      hintText: "Username",
-                      prefixIcon: const Icon(Icons.person),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Icon(
+                    Icons.lock_person_rounded,
+                    size: 70,
+                    color: Colors.white,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Welcome Back",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      hintText: "Password",
-                      prefixIcon: const Icon(Icons.lock),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
+                  Text(
+                    "Please sign in to continue",
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
-                  const SizedBox(height: 25),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => loginUser(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.blueAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
 
-                  // Eto ang nagpapa-click sa Sign Up
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            // Form Section (White Card)
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
                     children: [
-                      const Text(
-                        "Don't have an account? ",
-                        style: TextStyle(color: Colors.white),
+                      const SizedBox(height: 50),
+
+                      // Email/Username Field
+                      _buildField(
+                        controller: emailController,
+                        label: "Username/Email",
+                        icon: Icons.alternate_email,
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          // Tandaan: SignupPage ang gamit mo sa signup_page.dart (walang malaking U)
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SignupPage(),
+
+                      const SizedBox(height: 20),
+
+                      // Password Field
+                      _buildField(
+                        controller: passwordController,
+                        label: "Password",
+                        icon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {},
+                          child: const Text(
+                            "Forgot Password?",
+                            style: TextStyle(
+                              color: Colors.black45,
+                              fontSize: 13,
                             ),
-                          );
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: Colors.yellow,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+
+                      const SizedBox(height: 30),
+
+                      // Login Button (Solid Black)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: () => loginUser(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF121212), // Black
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 5,
+                            shadowColor: Colors.black.withOpacity(0.4),
+                          ),
+                          child: const Text(
+                            "LOGIN",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // Footer Link (Sign Up)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "New here? ",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignupPage(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Create an Account",
+                              style: TextStyle(
+                                color: Colors.black, // Match theme
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Helper Widget for consistent input fields
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 5, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        TextField(
+          controller: controller,
+          obscureText: isPassword,
+          // Cursor color changed to black for consistency
+          cursorColor: Colors.black,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: Colors.black87), // Black Icon
+            filled: true,
+            fillColor: const Color(0xFFF5F7FA),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.transparent),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(
+                color: Colors.black, // Focus border is now black
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 18),
+          ),
+        ),
+      ],
     );
   }
 }

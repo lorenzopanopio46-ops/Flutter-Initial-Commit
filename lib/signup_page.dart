@@ -21,13 +21,13 @@ class _SignupPageState extends State<SignupPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // --- LOGIC REMAINS UNCHANGED ---
   Future<void> registerUser() async {
     if (passwordController.text != confirmPasswordController.text) {
       _showSnackBar("Passwords do not match!", Colors.red);
       return;
     }
 
-    // Palitan ang localhost ng iyong IP address kung gagamit ng physical phone
     var url = Uri.parse("http://localhost/flutter_api/register.php");
 
     try {
@@ -54,145 +54,181 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   void _showSnackBar(String msg, Color color) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBlue = Colors.blue;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFE3F2FD), // Light blue background
-      body: SingleChildScrollView(
+      backgroundColor: const Color(0xFF121212), // Background to match the theme
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF000000), Color(0xFF2C3E50)], // Black to Slate
+          ),
+        ),
         child: Column(
           children: [
-            // --- BLUE HEADER SECTION ---
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 50, bottom: 30),
-              decoration: const BoxDecoration(
-                color: primaryBlue,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(40),
-                ),
-              ),
+            const SizedBox(height: 50),
+            // Header Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
                     ),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  const Icon(Icons.person_add, size: 80, color: Colors.white),
                   const SizedBox(height: 10),
                   const Text(
-                    "Create Account",
+                    "Register Now",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 26,
+                      fontSize: 34,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
                     ),
+                  ),
+                  const Text(
+                    "Fill in the details to create a new account",
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),
             ),
-
-            // --- FORM FIELDS SECTION ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-              child: Column(
-                children: [
-                  buildField(
-                    firstNameController,
-                    "First Name",
-                    Icons.person_outline,
+            const SizedBox(height: 30),
+            // Form Section
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
-                  buildField(
-                    lastNameController,
-                    "Last Name",
-                    Icons.person_outline,
-                  ),
-                  buildField(
-                    contactController,
-                    "Contact Number",
-                    Icons.phone_android,
-                    isPhone: true,
-                  ),
-                  buildField(
-                    emailController,
-                    "Username/Email",
-                    Icons.email_outlined,
-                  ),
-                  buildField(
-                    passwordController,
-                    "Password",
-                    Icons.lock_outline,
-                    isPassword: true,
-                    obscure: _obscurePassword,
-                    onToggle: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  buildField(
-                    confirmPasswordController,
-                    "Confirm Password",
-                    Icons.lock_reset,
-                    isPassword: true,
-                    obscure: _obscureConfirmPassword,
-                    onToggle: () => setState(
-                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      spreadRadius: 5,
                     ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // --- SIGN UP BUTTON ---
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: registerUser,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 3,
-                      ),
-                      child: const Text(
-                        "SIGN UP",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // --- LOGIN LINK ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
                     children: [
-                      const Text("Already have an account? "),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(
-                            color: primaryBlue,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 40),
+                      buildField(
+                        firstNameController,
+                        "First Name",
+                        Icons.person_outline,
+                      ),
+                      buildField(
+                        lastNameController,
+                        "Last Name",
+                        Icons.person_outline,
+                      ),
+                      buildField(
+                        contactController,
+                        "Contact Number",
+                        Icons.phone_android,
+                        isPhone: true,
+                      ),
+                      buildField(
+                        emailController,
+                        "Username/Email",
+                        Icons.alternate_email,
+                      ),
+                      buildField(
+                        passwordController,
+                        "Password",
+                        Icons.lock_outline_rounded,
+                        isPassword: true,
+                        obscure: _obscurePassword,
+                        onToggle: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                      ),
+                      buildField(
+                        confirmPasswordController,
+                        "Confirm Password",
+                        Icons.lock_reset_rounded,
+                        isPassword: true,
+                        obscure: _obscureConfirmPassword,
+                        onToggle: () => setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Styled Register Button (Black)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: registerUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF121212),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 8,
+                            shadowColor: Colors.black.withOpacity(0.4),
+                          ),
+                          child: const Text(
+                            "CREATE ACCOUNT",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 25),
+
+                      // Footer Link
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Already have an account? ",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Text(
+                              "Login Here",
+                              style: TextStyle(
+                                color: Colors.black, // Changed to Black
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -201,7 +237,7 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  // Common Widget for Fields based on your image
+  // Modern Input Field Design
   Widget buildField(
     TextEditingController ctrl,
     String hint,
@@ -211,28 +247,43 @@ class _SignupPageState extends State<SignupPage> {
     VoidCallback? onToggle,
     bool isPhone = false,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
       child: TextField(
         controller: ctrl,
         obscureText: isPassword ? obscure : false,
         keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+        cursorColor: Colors.black, // Added black cursor
         decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          hintText: hint,
-          prefixIcon: Icon(icon, color: Colors.blue),
+          labelText: hint,
+          labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: Icon(icon, color: Colors.black87), // Icon set to Black
           suffixIcon: isPassword
               ? IconButton(
-                  icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                  icon: Icon(
+                    obscure ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
                   onPressed: onToggle,
                 )
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
+          filled: true,
+          fillColor: const Color(0xFFF5F7FA),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.transparent),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(
+              color: Colors.black,
+              width: 1.5,
+            ), // Focused border set to Black
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
         ),
       ),
     );
